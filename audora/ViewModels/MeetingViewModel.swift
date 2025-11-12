@@ -10,8 +10,9 @@ extension Notification.Name {
 }
 
 enum MeetingViewTab: String, CaseIterable {
-    case myNotes = "My Notes"
+    case analytics = "Analytics"
     case transcript = "Transcript"
+    case myNotes = "My Notes"
     case enhancedNotes = "Enhanced Notes"
 }
 
@@ -42,7 +43,7 @@ class MeetingViewModel: ObservableObject {
     var isRecording: Bool {
         return recordingSessionManager.isRecordingMeeting(meeting.id)
     }
-    @Published var selectedTab: MeetingViewTab = .transcript  // Default to transcript tab
+    @Published var selectedTab: MeetingViewTab = .analytics  // Default to analytics tab
 
     @Published var isDeleted = false
     @Published var templates: [NoteTemplate] = []
@@ -75,11 +76,15 @@ class MeetingViewModel: ObservableObject {
         // Detect if this is a new meeting based on content, not storage existence
         isNewMeeting = isEmpty
 
-        // Set initial tab based on notes existence
-        if !self.meeting.generatedNotes.isEmpty {
+        // Set initial tab based on content availability
+        if self.meeting.analytics != nil {
+            selectedTab = .analytics
+        } else if !self.meeting.generatedNotes.isEmpty {
             selectedTab = .enhancedNotes
-        } else {
+        } else if !self.meeting.transcriptChunks.isEmpty {
             selectedTab = .transcript
+        } else {
+            selectedTab = .analytics
         }
 
         // Load templates and selected template
@@ -202,7 +207,47 @@ class MeetingViewModel: ObservableObject {
 
     func stopRecording() {
         recordingSessionManager.stopRecording()
+        
+        // Calculate analytics after stopping recording
+        calculateAnalytics()
+        
         saveMeeting()
+    }
+    
+    /// Calculate speech analytics from transcript chunks
+    private func calculateAnalytics() {
+        guard !meeting.transcriptChunks.isEmpty else {
+            print("⚠️ No transcript chunks to analyze")
+            return
+        }
+        
+        // Calculate duration in minutes
+        let chunks = meeting.transcriptChunks
+        guard let firstChunk = chunks.first, let lastChunk = chunks.last else {
+            return
+        }
+        
+        let durationSeconds = lastChunk.timestamp.timeIntervalSince(firstChunk.timestamp)
+        let durationMinutes = max(durationSeconds / 60.0, 0.1) // Minimum 0.1 minutes
+        
+        print("📊 Calculating analytics for \(chunks.count) chunks, duration: \(String(format: "%.1f", durationMinutes)) min")
+        
+        // Calculate analytics
+        if let analytics = AnalyticsCalculator.analyzeTranscript(
+            chunks: chunks,
+            durationMinutes: durationMinutes
+        ) {
+            meeting.analytics = analytics
+            print("✅ Analytics calculated successfully")
+            print("   Clarity: \(analytics.scores.clarity)")
+            print("   Conciseness: \(analytics.scores.conciseness)")
+            print("   Confidence: \(analytics.scores.confidence)")
+            
+            // Switch to analytics tab to show results
+            selectedTab = .analytics
+        } else {
+            print("⚠️ Failed to calculate analytics")
+        }
     }
 
     func loadTemplates() {
@@ -292,6 +337,8 @@ class MeetingViewModel: ObservableObject {
             }
 
             content = enhancedContent
+        case .analytics:
+            content = "analytics"
         }
 
         NSPasteboard.general.setString(content, forType: .string)

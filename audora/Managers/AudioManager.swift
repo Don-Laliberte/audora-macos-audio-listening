@@ -1364,6 +1364,22 @@ class AudioManager: NSObject, ObservableObject {
 
         print("💾 Saving mic following session with \(session.transcriptChunks.count) chunks")
 
+        // Calculate analytics for the session
+        if let firstChunk = session.transcriptChunks.first,
+           let lastChunk = session.transcriptChunks.last {
+            let durationSeconds = lastChunk.timestamp.timeIntervalSince(firstChunk.timestamp)
+            let durationMinutes = max(durationSeconds / 60.0, 0.1)
+
+            print("📊 Calculating analytics for mic following session")
+            if let analytics = AnalyticsCalculator.analyzeTranscript(
+                chunks: session.transcriptChunks,
+                durationMinutes: durationMinutes
+            ) {
+                session.analytics = analytics
+                print("✅ Analytics calculated - Clarity: \(analytics.scores.clarity), Conciseness: \(analytics.scores.conciseness), Confidence: \(analytics.scores.confidence)")
+            }
+        }
+
         // Post notification to save the session
         NotificationCenter.default.post(
             name: NSNotification.Name("SaveTranscriptionSession"),

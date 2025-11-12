@@ -418,6 +418,8 @@ struct MeetingDetailContentView: View {
                 
                 // Tab Content
                 switch viewModel.selectedTab {
+                case .analytics:
+                    analyticsView
                 case .myNotes:
                     myNotesView
                 case .transcript:
@@ -471,6 +473,36 @@ struct MeetingDetailContentView: View {
                         .foregroundColor(viewModel.meeting.userNotes.isEmpty ? .secondary : .primary)
                 }
                 .frame(maxHeight: .infinity)
+                .background(Color.gray.opacity(0.05))
+                .cornerRadius(8)
+            }
+        }
+    }
+    
+    private var analyticsView: some View {
+        VStack {
+            if let analytics = viewModel.meeting.analytics {
+                AnalyticsView(analytics: analytics)
+                    .background(Color.gray.opacity(0.05))
+                    .cornerRadius(8)
+                    .frame(maxHeight: .infinity)
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Analytics Available")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Analytics will be generated automatically when you finish recording.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.gray.opacity(0.05))
                 .cornerRadius(8)
             }
