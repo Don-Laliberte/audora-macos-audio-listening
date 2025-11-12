@@ -5,7 +5,7 @@
 <h3 align="center">audora</h3>
 
   <p align="center">
-    The Free, Open-Source AI Notetaker for Busy Engineers
+    The Free, Open-Source AI Communication Coach for Busy Professionals
     <br />
      <a href="https://github.com/psycho-baller/audora/releases/latest/download/audora.dmg">Download for MacOS 14+</a>
   </p>
