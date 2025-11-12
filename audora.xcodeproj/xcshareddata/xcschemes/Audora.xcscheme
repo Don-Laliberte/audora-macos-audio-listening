@@ -73,6 +73,7 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
+      customArchiveName = "Audora"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>
